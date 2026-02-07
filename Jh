@@ -1,0 +1,274 @@
+-- SERVICIOS
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+
+-- FUNCIÓN DE SIGILO (ANTI-DEX)
+local function randomName()
+	local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	local res = ""
+	for i = 1, 20 do
+		local rand = math.random(1, #chars)
+		res = res .. string.sub(chars, rand, rand)
+	end
+	return res
+end
+
+-- CONTENEDOR DE PROTECCIÓN
+local function getParent()
+	local success, core = pcall(function() return game:GetService("CoreGui") end)
+	if success then
+		local protect = (syn and syn.protect_gui) or (gethui)
+		if protect then
+			local folder = Instance.new("Folder")
+			folder.Name = randomName()
+			protect(folder)
+			folder.Parent = core
+			return folder
+		end
+		return core
+	end
+	return player:WaitForChild("PlayerGui")
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = randomName()
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999999
+ScreenGui.IgnoreGuiInset = true 
+ScreenGui.Parent = getParent()
+
+----------------------------------------------------------------
+-- PANTALLA DE CARGA MEJORADA (FIXED)
+----------------------------------------------------------------
+local LoadingFrame = Instance.new("Frame")
+LoadingFrame.Size = UDim2.new(1, 0, 1, 0)
+LoadingFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
+LoadingFrame.ZIndex = 10000
+LoadingFrame.Active = true
+LoadingFrame.Parent = ScreenGui
+
+local LoadingImage = Instance.new("ImageLabel")
+LoadingImage.Size = UDim2.new(0, 120, 0, 120)
+LoadingImage.Position = UDim2.new(0.5, -60, 0.5, -80)
+LoadingImage.BackgroundTransparency = 1
+LoadingImage.Image = "rbxassetid://140063792214149"
+LoadingImage.ZIndex = 10001
+LoadingImage.Parent = LoadingFrame
+Instance.new("UICorner", LoadingImage).CornerRadius = UDim.new(1, 0)
+
+local LoadingText = Instance.new("TextLabel")
+LoadingText.Size = UDim2.new(0, 400, 0, 50)
+LoadingText.Position = UDim2.new(0.5, -200, 0.5, 60)
+LoadingText.BackgroundTransparency = 1
+LoadingText.Text = "Iniciando..."
+LoadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadingText.Font = Enum.Font.GothamBold
+LoadingText.TextSize = 22
+LoadingText.ZIndex = 10001
+LoadingText.Parent = LoadingFrame
+
+local SuccessText = Instance.new("TextLabel")
+SuccessText.Size = UDim2.new(0, 500, 0, 60)
+SuccessText.Position = UDim2.new(0.5, -250, 0.5, 120)
+SuccessText.BackgroundTransparency = 1
+SuccessText.Text = "MACHIKA HUB EXITOSO"
+SuccessText.TextColor3 = Color3.fromRGB(255, 255, 255)
+SuccessText.Font = Enum.Font.FredokaOne -- Fuente elegante y gruesa
+SuccessText.TextSize = 32
+SuccessText.TextTransparency = 1
+SuccessText.ZIndex = 10002
+SuccessText.Parent = LoadingFrame
+
+----------------------------------------------------------------
+-- SISTEMA DE UI LIBRARY
+----------------------------------------------------------------
+local Library = {}
+
+function Library:CreateWindow()
+	local OpenBtn = Instance.new("ImageButton")
+	OpenBtn.Name = randomName()
+	OpenBtn.Size = UDim2.new(0, 65, 0, 65)
+	OpenBtn.Position = UDim2.new(0.1, 0, 0.4, 0)
+	OpenBtn.Image = "rbxassetid://140063792214149"
+	OpenBtn.Visible = false
+	OpenBtn.ZIndex = 5000
+	OpenBtn.Parent = ScreenGui
+	Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
+
+	local MainFrame = Instance.new("Frame")
+	MainFrame.Name = randomName()
+	MainFrame.Size = UDim2.new(0, 480, 0, 340)
+	MainFrame.Position = UDim2.new(0.5, -240, 0.5, -170)
+	MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+	MainFrame.Visible = false
+	MainFrame.Active = true
+	MainFrame.Parent = ScreenGui
+	Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+	-- PERFIL DEL USUARIO (FIXED: Carga sin trabar el script)
+	local ProfileImg = Instance.new("ImageLabel")
+	ProfileImg.Size = UDim2.new(0, 40, 0, 40)
+	ProfileImg.Position = UDim2.new(0, 12, 1, -52)
+	ProfileImg.BackgroundTransparency = 1
+	ProfileImg.ZIndex = 5010
+	ProfileImg.Parent = MainFrame
+	Instance.new("UICorner", ProfileImg).CornerRadius = UDim.new(1, 0)
+	
+	task.spawn(function()
+		local success, content = pcall(function()
+			return Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+		end)
+		if success then ProfileImg.Image = content end
+	end)
+
+	local CloseBtn = Instance.new("TextButton")
+	CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+	CloseBtn.Position = UDim2.new(1, -40, 0, 10)
+	CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	CloseBtn.Text = "-"
+	CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	CloseBtn.ZIndex = 5005
+	CloseBtn.Parent = MainFrame
+	Instance.new("UICorner", CloseBtn)
+
+	local TabList = Instance.new("ScrollingFrame")
+	TabList.Size = UDim2.new(0, 120, 1, -80)
+	TabList.Position = UDim2.new(0, 10, 0, 10)
+	TabList.BackgroundTransparency = 1
+	TabList.ScrollBarThickness = 0
+	TabList.Parent = MainFrame
+	Instance.new("UIListLayout", TabList).Padding = UDim.new(0, 5)
+
+	local Container = Instance.new("Frame")
+	Container.Size = UDim2.new(1, -150, 1, -25)
+	Container.Position = UDim2.new(0, 140, 0, 10)
+	Container.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+	Container.Parent = MainFrame
+	Instance.new("UICorner", Container)
+
+	-- DRAG LOGIC (PARA CELULAR)
+	local dragging, dragStart, startPos
+	OpenBtn.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true dragStart = input.Position startPos = OpenBtn.Position
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			OpenBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end end)
+
+	OpenBtn.MouseButton1Click:Connect(function() OpenBtn.Visible = false MainFrame.Visible = true end)
+	CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false OpenBtn.Visible = true end)
+
+	return {TabList = TabList, Container = Container, Open = OpenBtn}
+end
+
+-- FUNCIONES DE ELEMENTOS (TABS, BOTONES, ETC)
+function Library:CreateTab(name, window)
+	local TabBtn = Instance.new("TextButton")
+	TabBtn.Size = UDim2.new(1, 0, 0, 35)
+	TabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+	TabBtn.Text = name
+	TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	TabBtn.Font = Enum.Font.Gotham
+	TabBtn.Parent = window.TabList
+	Instance.new("UICorner", TabBtn)
+
+	local Content = Instance.new("ScrollingFrame")
+	Content.Size = UDim2.new(1, -10, 1, -10)
+	Content.Position = UDim2.new(0, 5, 0, 5)
+	Content.BackgroundTransparency = 1
+	Content.Visible = false
+	Content.ScrollBarThickness = 2
+	Content.Parent = window.Container
+	Instance.new("UIListLayout", Content).Padding = UDim.new(0, 8)
+
+	TabBtn.MouseButton1Click:Connect(function()
+		for _, v in pairs(window.Container:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
+		Content.Visible = true
+	end)
+	return Content
+end
+
+function Library:AddButton(txt, parent, callback)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -5, 0, 40)
+	btn.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+	btn.Text = txt
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Parent = parent
+	Instance.new("UICorner", btn)
+	btn.MouseButton1Click:Connect(callback)
+end
+
+function Library:AddToggle(txt, parent, callback)
+	local state = false
+	local tgl = Instance.new("TextButton")
+	tgl.Size = UDim2.new(1, -5, 0, 40)
+	tgl.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+	tgl.Text = "  " .. txt
+	tgl.TextXAlignment = Enum.TextXAlignment.Left
+	tgl.TextColor3 = Color3.fromRGB(200, 200, 200)
+	tgl.Parent = parent
+	Instance.new("UICorner", tgl)
+	
+	local indicator = Instance.new("Frame")
+	indicator.Size = UDim2.new(0, 25, 0, 25)
+	indicator.Position = UDim2.new(1, -35, 0.5, -12)
+	indicator.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	indicator.Parent = tgl
+	Instance.new("UICorner", indicator).CornerRadius = UDim.new(1, 0)
+
+	tgl.MouseButton1Click:Connect(function()
+		state = not state
+		indicator.BackgroundColor3 = state and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+		callback(state)
+	end)
+end
+
+----------------------------------------------------------------
+-- EJECUCIÓN
+----------------------------------------------------------------
+local win = Library:CreateWindow()
+local mainTab = Library:CreateTab("Principal", win)
+
+-- Ejemplo de botones reales:
+Library:AddButton("Imprimir Hola", mainTab, function() print("Hola desde Machika Hub!") end)
+Library:AddToggle("Salto Infinito", mainTab, function(val) print("Salto infinito:", val) end)
+
+-- SECUENCIA DE CARGA (FIXED: Ahora sí termina)
+task.spawn(function()
+	local spin = TweenService:Create(LoadingImage, TweenInfo.new(1.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Rotation = 360})
+	spin:Play()
+
+	for i = 0, 100 do
+		local msg = i < 40 and "Cargando Menu..." or i < 80 and "Ocultando del DEX..." or "Finalizando..."
+		LoadingText.Text = msg .. " " .. i .. "%"
+		task.wait(0.02)
+	end
+
+	spin:Cancel()
+	LoadingText.Text = ""
+	
+	-- Efecto Éxito MACHIKA HUB
+	TweenService:Create(SuccessText, TweenInfo.new(0.8), {TextTransparency = 0}):Play()
+	LoadingImage:TweenSize(UDim2.new(0, 160, 0, 160), "Out", "Back", 0.5)
+	task.wait(1.5)
+
+	local fadeOut = TweenService:Create(LoadingFrame, TweenInfo.new(0.6), {BackgroundTransparency = 1})
+	TweenService:Create(SuccessText, TweenInfo.new(0.4), {TextTransparency = 1}):Play()
+	TweenService:Create(LoadingImage, TweenInfo.new(0.4), {ImageTransparency = 1}):Play()
+	fadeOut:Play()
+	
+	fadeOut.Completed:Connect(function()
+		LoadingFrame:Destroy()
+		win.Open.Visible = true
+	end)
+end)
